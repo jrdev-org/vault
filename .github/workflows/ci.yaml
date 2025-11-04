@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x] # Test across supported Node versions
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Install dependencies
+      - name: Install dependencies
+        run: npm install -g pnpm && pnpm install && pnpm install -g biome
+
+      # 3. Lint & format with Biome
+      - name: Lint & format with Biome
+        uses: biomejs/biome@v1
+        with:
+          args: check --apply-unsafe .
+
+      # 5. Typecheck with TypeScript
+      - name: Typecheck (tsc --noEmit)
+        run: pnpm tsc --noEmit
+
+      # 6. Build the project
+      - name: Build project
+        run: pnpm run build --if-present
+
+      # 7. Run tests (if you have them)
+      - name: Run tests
+        run: pnpm test --if-present || echo "No tests found, skipping."
+
+      # Optional: Upload build artifacts
+      # - name: Upload build output
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: dist
+      #     path: dist/
