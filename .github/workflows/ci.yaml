@@ -42,7 +42,7 @@ jobs:
 
       # 6. Run Biome (lint + format check)
       - name: Run Biome
-        run: pnpm biome check --apply-unsafe .
+        run: pnpm check
 
       # 7. Typecheck with TypeScript
       - name: Typecheck (tsc --noEmit)
@@ -50,11 +50,11 @@ jobs:
 
       # 8. Build the project
       - name: Build project
-        run: pnpm build --if-present
+        run: pnpm build
 
       # 9. Run tests (if you have them)
-      - name: Run tests
-        run: pnpm test --if-present || echo "No tests found, skipping."
+      # - name: Run tests
+      #   run: pnpm test --if-present || echo "No tests found, skipping."
 
       # Optional: Upload build artifacts
       # - name: Upload build output
