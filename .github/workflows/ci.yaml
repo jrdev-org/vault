@@ -19,31 +19,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Install dependencies
-      - name: Install dependencies
-        run: npm install -g pnpm && pnpm install && pnpm install -g biome
-
-      # 3. Lint & format with Biome
-      - name: Lint & format with Biome
-        uses: biomejs/biome@v1
+      # 2. Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
-          args: check --apply-unsafe .
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
 
-      # 5. Typecheck with TypeScript
+      # 3. Setup pnpm (from packageManager field)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+          run_install: false
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5. Restore Next.js build cache
+      - name: Restore Next.js cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ matrix.node-version }}-
+
+      # 6. Run Biome (lint + format check)
+      - name: Run Biome
+        run: pnpm biome check --apply-unsafe .
+
+      # 7. Typecheck with TypeScript
       - name: Typecheck (tsc --noEmit)
-        run: pnpm tsc --noEmit
+        run: pnpm typecheck
 
-      # 6. Build the project
+      # 8. Build the project
       - name: Build project
-        run: pnpm run build --if-present
+        run: pnpm build --if-present
 
-      # 7. Run tests (if you have them)
+      # 9. Run tests (if you have them)
       - name: Run tests
         run: pnpm test --if-present || echo "No tests found, skipping."
 
       # Optional: Upload build artifacts
       # - name: Upload build output
-      #   uses: actions/upload-artifact@v3
+      #   uses: actions/upload-artifact@v4
       #   with:
       #     name: dist
       #     path: dist/
